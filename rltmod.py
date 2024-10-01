@@ -1,3 +1,8 @@
+'''
+Semi-mechanistic model of radioligand therapy (RLT).
+'''
+__version__ = '0.1.0'
+
 from pysb import *
 from pysb import macros
 import pysb.units
@@ -8,7 +13,6 @@ pysb.units.add_macro_units(pkpd)
 pysb.units.add_macro_units(macros)
 
 import numpy as np
-from scipy.constants import N_A
 
 LN2 = np.log(2.0)
 
@@ -33,6 +37,9 @@ with units():
     Monomer("RLT", ["b", "decay", "endo"], {"decay": ["T", "F"], "endo": ["T", "F"]})
     Parameter("dose_RLT_CENTRAL", 500.0, unit="nmol")
     pkpd.dose_bolus(RLT(b=None, decay="F", endo="F"), CENTRAL, dose_RLT_CENTRAL)
+    Parameter("dose_RLT_decay_CENTRAL", 0.0, unit="nmol")
+    Expression("expr_dose_RLT_decay_CENTRAL", dose_RLT_decay_CENTRAL / V_CENTRAL)
+    Initial(RLT(b=None, decay="T", endo="F") ** CENTRAL, expr_dose_RLT_decay_CENTRAL)
 
     # Target Biomarker
     Monomer("Biomarker", ["b", "endo"], {"endo": ["T", "F"]})
@@ -40,7 +47,7 @@ with units():
     Initial(Biomarker(b=None, endo="F") ** CANCER, Biomarker_0)
 
     # RLT decay
-    Parameter("rlt_halflife", 1.0, unit="day")
+    Parameter("rlt_halflife", 2.67, unit="day")  # Yttrium-90 t_1/2 = 2.67 days
     Expression("k_rlt_decay", LN2 / rlt_halflife)
     # Define an Emission monomer to monitor the amount of radioactive emissions generated in each compartment and under different conditions.
     Monomer("Emission", ["endo", "bound"], {"endo": ["F", "T"], "bound": ["F", "T"]})
@@ -115,7 +122,7 @@ with units():
 
     ##  Biomarker Binding  ##
     Parameter("kr_bind_rlt_biomarker", 1e-3, unit="1/s")
-    Parameter("Kd_rlt_biomarker", 10.0, unit="nM")
+    Parameter("Kd_rlt_biomarker", 100.0, unit="nM")
     Expression("kf_bind_rlt_biomarker", kr_bind_rlt_biomarker / Kd_rlt_biomarker)
     # Binding between extracellular RLT (endo="F") and membrane-bound biomarker (endo="F")
     macros.bind(
@@ -171,16 +178,27 @@ with units():
     # Decayed RLT in each compartment
     Observable("obs_RLT_CENTRAL_decay", RLT(b=None, decay="T") ** CENTRAL)
     Observable("obs_RLT_PERIPHERAL_decay", RLT(b=None, decay="T") ** PERIPHERAL)
-    Observable("obs_RLT_CANCER_decay_exo", RLT(b=WILD, decay="T", endo='F') ** CANCER)
+    Observable("obs_RLT_CANCER_decay_exo", RLT(b=WILD, decay="T", endo="F") ** CANCER)
 
     # Emissions in each compartment and state
+    # All emissions
+    Observable("obs_Emissions", Emission())
+    # Emissions in the CENTRAL compartment
     Observable("obs_Emission_CENTRAL", Emission() ** CENTRAL)
+    # Emissions in the PERIPHERAL compartment
     Observable("obs_Emission_PERIPHERAL", Emission() ** PERIPHERAL)
+    # Emissions in the CANCER compartment
     Observable("obs_Emission_CANCER_all", Emission() ** CANCER)
+    # Emissions in the CANCER compartment from RLT bound to the biomarker
     Observable("obs_Emission_CANCER_bound", Emission(bound="T", endo="F") ** CANCER)
+    # Emissions in the CANCER compartment from RLT bound to biomarker that
+    # has undergone endocytosis or from RLT that was endocytosed but unbound
+    # from the biomarker.
     Observable(
         "obs_Emission_CANCER_bound_endo", Emission(endo="T", bound="T") ** CANCER
     )
+    # Emissions in the CANCER compartment from RLT bound to biomarker that
+    # has undergone endocytosis
     Expression(
         "obs_Targeted_Emissions",
         (obs_Emission_CANCER_bound + obs_Emission_CANCER_bound_endo),
