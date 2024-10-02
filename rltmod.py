@@ -24,9 +24,9 @@ with units():
     SimulationUnits(time="h", concentration="nM", volume="L")
 
     ##  Compartments  ##
-    Parameter("V_CENTRAL", 1.0, unit="L")
-    Parameter("V_PERIPHERAL", 1.0, unit="L")
-    Parameter("V_CANCER", 1.0, unit="L")
+    Parameter("V_CENTRAL", 15.0, unit="L")
+    Parameter("V_PERIPHERAL", 10.0, unit="L")
+    Parameter("V_CANCER", 0.5, unit="L")
     pkpd.three_compartments(
         "CENTRAL", V_CENTRAL, "PERIPHERAL", V_PERIPHERAL, "CANCER", V_CANCER
     )
@@ -122,7 +122,7 @@ with units():
 
     ##  Biomarker Binding  ##
     Parameter("kr_bind_rlt_biomarker", 1e-3, unit="1/s")
-    Parameter("Kd_rlt_biomarker", 100.0, unit="nM")
+    Parameter("Kd_rlt_biomarker", 10.0, unit="nM")
     Expression("kf_bind_rlt_biomarker", kr_bind_rlt_biomarker / Kd_rlt_biomarker)
     # Binding between extracellular RLT (endo="F") and membrane-bound biomarker (endo="F")
     macros.bind(
