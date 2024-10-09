@@ -1,7 +1,6 @@
-'''
+"""
 Semi-mechanistic model of radioligand therapy (RLT).
-'''
-__version__ = '0.1.0'
+"""
 
 from pysb import *
 from pysb import macros
@@ -35,7 +34,7 @@ with units():
     #  decay: F = radioactive, T = radioisotope has decayed
     #  endo: F = extracellular, T = taken inside a cell by endocytosis
     Monomer("RLT", ["b", "decay", "endo"], {"decay": ["T", "F"], "endo": ["T", "F"]})
-    Parameter("dose_RLT_CENTRAL", 500.0, unit="nmol")
+    Parameter("dose_RLT_CENTRAL", 100.0, unit="nmol")
     pkpd.dose_bolus(RLT(b=None, decay="F", endo="F"), CENTRAL, dose_RLT_CENTRAL)
     Parameter("dose_RLT_decay_CENTRAL", 0.0, unit="nmol")
     Expression("expr_dose_RLT_decay_CENTRAL", dose_RLT_decay_CENTRAL / V_CENTRAL)
@@ -111,8 +110,8 @@ with units():
         ],
     )
     # CENTRAL <-> CANCER
-    Parameter("kf_distribute_RLT_CENTRAL_CANCER", 0.1, unit=" 1 / h")
-    Parameter("kr_distribute_RLT_CENTRAL_CANCER", 0.1, unit=" 1 / h")
+    Parameter("kf_distribute_RLT_CENTRAL_CANCER", 0.05, unit=" 1 / h")
+    Parameter("kr_distribute_RLT_CENTRAL_CANCER", 0.05, unit=" 1 / h")
     pkpd.distribute(
         RLT(b=None, endo="F"),
         CENTRAL,
@@ -187,8 +186,15 @@ with units():
     Observable("obs_Emission_CENTRAL", Emission() ** CENTRAL)
     # Emissions in the PERIPHERAL compartment
     Observable("obs_Emission_PERIPHERAL", Emission() ** PERIPHERAL)
+    Expression(
+        "obs_Emission_off_target",
+        (
+            (obs_Emission_CENTRAL * V_CENTRAL)
+            + (obs_Emission_PERIPHERAL * V_PERIPHERAL) / (V_CENTRAL + V_PERIPHERAL)
+        ),
+    )
     # Emissions in the CANCER compartment
-    Observable("obs_Emission_CANCER_all", Emission() ** CANCER)
+    Observable("obs_Emission_CANCER", Emission() ** CANCER)
     # Emissions in the CANCER compartment from RLT bound to the biomarker
     Observable("obs_Emission_CANCER_bound", Emission(bound="T", endo="F") ** CANCER)
     # Emissions in the CANCER compartment from RLT bound to biomarker that
