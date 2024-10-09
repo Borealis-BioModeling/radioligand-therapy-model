@@ -45,12 +45,9 @@ Repository = "https://github.com/Borealis-BioModeling/radioligand-therapy-model"
 Issues = "https://github.com/Borealis-BioModeling/radioligand-therapy-model/issues"
 Changelog = "https://github.com/Borealis-BioModeling/radioligand-therapy-model/blob/main/CHANGELOG.md"
 
-# Find namespace package
-[tool.setuptools.packages.find]
-where = ["./"]
-include = ["rltmod"]
-namespaces = false
-
 # Set the dynamic version
 [tool.setuptools.dynamic]
 version = {attr = "rltmod.__version__"}
+
+[tool.setuptools.packages.find]
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
