@@ -159,7 +159,7 @@ with units():
     )
 
     ##  Drug Elimination  ##
-    Parameter("kel_RLT_CENTRAL", 0.1, unit=" 1 / h")
+    Parameter("kel_RLT_CENTRAL", 0.01, unit=" 1 / h")
     pkpd.eliminate(RLT, CENTRAL, kel_RLT_CENTRAL)
 
     ##  Observables  ##
